@@ -10,6 +10,8 @@ import {
   isSelfConfigured,
 } from "@/lib/self-protocol-v2";
 import { generate402Header, verifyPayment, PAYMENT_TIERS } from "@/lib/x402";
+import { isRegisteredAgent } from "@/lib/erc8004";
+import { checkRateLimit, getRetryAfter } from "@/lib/rate-limiter";
 import type { Address } from "viem";
 
 // In-memory store for verification requests (use Redis in production)
@@ -18,6 +20,7 @@ export const verificationRequests = new Map<
   {
     id: string;
     agentAddress: string;
+    agentId?: number;
     userAddress: string;
     level: string;
     status: "pending" | "completed" | "failed";
@@ -35,6 +38,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       agentAddress,
+      agentId,
       userAddress,
       level = "basic",
       paymentHeader,
@@ -60,6 +64,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ERC-8004 agent identity verification (optional but recommended)
+    if (agentId !== undefined) {
+      try {
+        const registered = await isRegisteredAgent(agentId);
+        if (!registered) {
+          return NextResponse.json(
+            {
+              error: "Unregistered agent",
+              message: `Agent #${agentId} is not registered on the ERC-8004 registry. Register at https://agentscan.info/ first.`,
+            },
+            { status: 403 }
+          );
+        }
+      } catch (err) {
+        console.warn("ERC-8004 check failed (allowing request):", err);
+        // Don't block on ERC-8004 failures — network issues shouldn't break the flow
+      }
+    }
+
+    // Rate limiting
+    const rateLimitResult = checkRateLimit(agentAddress, level);
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          error: "Rate limit exceeded",
+          message: `Too many ${level} verification requests. Limit: ${rateLimitResult.limit}/hour.`,
+          remaining: rateLimitResult.remaining,
+          resetAt: rateLimitResult.resetAt.toISOString(),
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(getRetryAfter(rateLimitResult.resetAt)),
+            "X-RateLimit-Limit": String(rateLimitResult.limit),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": rateLimitResult.resetAt.toISOString(),
+          },
+        }
+      );
+    }
+
     const tier = PAYMENT_TIERS[level];
 
     // x402 Payment gate
@@ -77,7 +122,7 @@ export async function POST(request: NextRequest) {
           paymentRequired: {
             amount: tier.priceCUSD,
             currency: "cUSD",
-            network: "celo-alfajores",
+            network: "celo-sepolia",
             paymentRequirements,
             tier: tier.level,
             description: tier.description,
@@ -129,6 +174,7 @@ export async function POST(request: NextRequest) {
     const requestData = {
       id: verificationId,
       agentAddress: agentAddress.toLowerCase(),
+      agentId: agentId !== undefined ? Number(agentId) : undefined,
       userAddress: userAddress.toLowerCase(),
       level,
       status: "pending" as const,
@@ -176,10 +222,11 @@ export async function POST(request: NextRequest) {
 
     const demoMode = !hasIssuerKey && !isSelfConfigured();
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       verificationId,
       status: storedRequest.status,
       level,
+      agentId: requestData.agentId,
       expiresAt,
       selfVerificationUrl: selfSession.verificationUrl,
       selfQrData: selfSession.qrData,
@@ -190,6 +237,13 @@ export async function POST(request: NextRequest) {
         ? "Demo mode: verification simulated"
         : "Verification initiated. Complete via Self Protocol app.",
     });
+
+    // Add rate limit headers
+    response.headers.set("X-RateLimit-Limit", String(rateLimitResult.limit));
+    response.headers.set("X-RateLimit-Remaining", String(rateLimitResult.remaining));
+    response.headers.set("X-RateLimit-Reset", rateLimitResult.resetAt.toISOString());
+
+    return response;
   } catch (error) {
     console.error("Verification request error:", error);
     return NextResponse.json(

@@ -19,7 +19,7 @@ export interface PaymentTier {
 
 export interface PaymentRequest {
   scheme: "exact";
-  network: "celo" | "celo-alfajores";
+  network: "celo" | "celo-sepolia";
   maxAmountRequired: string;
   resource: string;
   description: string;
@@ -71,7 +71,7 @@ export const PAYMENT_TIERS: Record<string, PaymentTier> = {
 };
 
 // cUSD contract on Alfajores testnet
-const CUSD_ADDRESS_ALFAJORES = "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1";
+const CUSD_ADDRESS_ALFAJORES = "0xEF4d55D6dE8e8d73232827Cd1e9b2F2dBb45bC80";
 
 /**
  * Generate a 402 Payment Required response header.
@@ -86,7 +86,7 @@ export function generate402Header(
 
   const paymentRequest: PaymentRequest = {
     scheme: "exact",
-    network: "celo-alfajores",
+    network: "celo-sepolia",
     maxAmountRequired: tier.priceCUSD,
     resource,
     description: tier.description,
@@ -125,7 +125,7 @@ export async function verifyPayment(
         paidAmount: requiredAmount,
         paidTo: (process.env.ISSUER_ADDRESS || "0x7f812f3a8695400e3075DAC2d5008CB068D162e7") as Address,
         timestamp: new Date().toISOString(),
-        network: "celo-alfajores",
+        network: "celo-sepolia",
         demoMode: true,
       },
     };
@@ -148,7 +148,7 @@ export async function verifyPayment(
         paidAmount: paymentData.amount,
         paidTo: paymentData.to as Address,
         timestamp: new Date().toISOString(),
-        network: "celo-alfajores",
+        network: "celo-sepolia",
         demoMode: false,
       },
     };
@@ -180,7 +180,7 @@ export async function createDemoPayment(
       paidAmount: tier.priceCUSD,
       paidTo: (process.env.ISSUER_ADDRESS || "0x7f812f3a8695400e3075DAC2d5008CB068D162e7") as Address,
       timestamp: new Date().toISOString(),
-      network: "celo-alfajores",
+      network: "celo-sepolia",
       demoMode: true,
     },
   };

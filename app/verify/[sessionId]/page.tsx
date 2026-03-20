@@ -24,6 +24,11 @@ export default function VerifyPage() {
   const [error, setError] = useState("");
   const [qrUrl] = useState(`/verify/${sessionId}`);
   const [pollCount, setPollCount] = useState(0);
+  const [agentInfo, setAgentInfo] = useState<{
+    agentId: number;
+    name?: string;
+    description?: string;
+  } | null>(null);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -108,6 +113,30 @@ export default function VerifyPage() {
 
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-md mx-auto">
+          {/* Agent info banner */}
+          {agentInfo && (
+            <div className="bg-[#111827] border border-[#35D07F]/20 rounded-2xl p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#35D07F]/10 flex items-center justify-center text-lg">
+                  🤖
+                </div>
+                <div>
+                  <p className="text-white text-sm font-medium">
+                    {agentInfo.name || `Agent #${agentInfo.agentId}`}
+                  </p>
+                  <p className="text-gray-500 text-xs">
+                    {agentInfo.description || "Registered on ERC-8004"}
+                  </p>
+                </div>
+                <div className="ml-auto">
+                  <span className="text-xs bg-[#35D07F]/10 text-[#35D07F] px-2 py-1 rounded-full">
+                    Verified Agent
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Header */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 rounded-2xl bg-[#35D07F]/10 border border-[#35D07F]/30 flex items-center justify-center text-3xl mx-auto mb-4">
@@ -117,8 +146,9 @@ export default function VerifyPage() {
               Identity Verification
             </h1>
             <p className="text-gray-400 text-sm">
-              Verify your identity with Self Protocol — your data never leaves
-              your device
+              {agentInfo
+                ? `${agentInfo.name || `Agent #${agentInfo.agentId}`} is requesting your identity verification`
+                : "Verify your identity with Self Protocol — your data never leaves your device"}
             </p>
           </div>
 
@@ -141,7 +171,7 @@ export default function VerifyPage() {
                 />
                 {status.attestationHash && (
                   <a
-                    href={`https://alfajores.celoscan.io/tx/${status.attestationHash}`}
+                    href={`https://celo-sepolia.blockscout.com/tx/${status.attestationHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-4 inline-flex items-center gap-2 text-[#35D07F] text-sm hover:underline"

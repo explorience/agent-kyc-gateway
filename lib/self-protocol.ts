@@ -7,7 +7,7 @@ import {
   type Hex,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { celoAlfajores } from "viem/chains";
+import { celoSepolia } from "viem/chains";
 import { OdisUtils } from "@celo/identity";
 import { OdisContextName } from "@celo/identity/lib/odis/query";
 import type { AuthSigner } from "@celo/identity/lib/odis/query";
@@ -20,17 +20,17 @@ import {
 
 // Contract addresses (Alfajores testnet)
 const FEDERATED_ATTESTATIONS_ADDRESS = process.env.FEDERATED_ATTESTATIONS_ADDRESS || 
-  "0x70F9314aF173c246669cFb0EEe79F9Cfd9C34ee3";
+  "0xb0Fe4466f288A3BbE5C2736B081B2021080DF703";
 const ODIS_PAYMENTS_ADDRESS = process.env.ODIS_PAYMENTS_ADDRESS ||
-  "0x645170cdB6B5c1bc80847bb728dBa56C50a20a49";
+  "0x96AfaE75F12A759c1dFB364ce93548c3Bd242D58";
 const STABLE_TOKEN_ADDRESS = process.env.STABLE_TOKEN_ADDRESS ||
-  "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1";
+  "0xEF4d55D6dE8e8d73232827Cd1e9b2F2dBb45bC80";
 
-const RPC_URL = process.env.CELO_ALFAJORES_RPC || "https://alfajores-forno.celo-testnet.org";
+const RPC_URL = process.env.CELO_ALFAJORES_RPC || "https://celo-sepolia.drpc.org";
 
 // Initialize clients
 const publicClient = createPublicClient({
-  chain: celoAlfajores,
+  chain: celoSepolia,
   transport: http(RPC_URL),
 });
 
@@ -45,7 +45,7 @@ function getWalletClient(): ReturnType<typeof createWalletClient> {
     const account = privateKeyToAccount(privateKey as Hex);
     walletClient = createWalletClient({
       account,
-      chain: celoAlfajores,
+      chain: celoSepolia,
       transport: http(RPC_URL),
     });
   }
