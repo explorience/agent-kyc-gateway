@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import {
-  registerAttestation,
-  VERIFICATION_LEVELS,
-  checkOdisQuota,
-} from "@/lib/self-protocol";
-import {
   createVerificationSession,
   isSelfConfigured,
 } from "@/lib/self-protocol-v2";
+import {
+  issueKYHCredential,
+  isEASConfigured,
+  formatAttestationResponse,
+} from "@/lib/eas";
 import { generate402Header, verifyPayment, PAYMENT_TIERS } from "@/lib/x402";
 import { isRegisteredAgent } from "@/lib/erc8004";
 import { checkRateLimit, getRetryAfter } from "@/lib/rate-limiter";
@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const verificationLevel = VERIFICATION_LEVELS[level];
-    if (!verificationLevel) {
+    const validLevels = ["starter", "basic", "standard", "enhanced"];
+    if (!validLevels.includes(level)) {
       return NextResponse.json(
         {
           error:
@@ -160,18 +160,9 @@ export async function POST(request: NextRequest) {
       paymentReceipt = paymentResult.receipt;
     }
 
-    // Check ODIS quota in demo mode
-    const hasIssuerKey = process.env.ISSUER_PRIVATE_KEY;
-    if (hasIssuerKey) {
-      try {
-        const quota = await checkOdisQuota();
-        console.log(`ODIS Quota available: ${quota}`);
-      } catch (err) {
-        console.warn("ODIS quota check failed (continuing):", err);
-      }
-    } else {
-      console.log("Demo mode: Skipping ODIS quota check");
-    }
+    // EAS mode check
+    const easConfigured = isEASConfigured();
+    console.log(`EAS configured: ${easConfigured}`);
 
     // Create verification request
     const verificationId = uuidv4();
@@ -208,34 +199,26 @@ export async function POST(request: NextRequest) {
     );
     storedRequest.providerResults = multiProviderResult;
 
-    // On-chain attestation via ODIS/FederatedAttestations
-    if (hasIssuerKey && multiProviderResult.overallSuccess) {
-      try {
-        const result = await registerAttestation(
-          `+1555${userAddress.slice(-7)}`,
-          userAddress as Address
-        );
-        storedRequest.status = "completed";
-        storedRequest.attestationHash = result.transactionHash;
-        console.log(
-          `Verification completed for ${userAddress}:`,
-          result.transactionHash
-        );
-      } catch (error) {
-        console.error("Attestation registration failed:", error);
-        storedRequest.status = multiProviderResult.overallSuccess ? "completed" : "pending";
-      }
-    } else if (multiProviderResult.overallSuccess) {
-      // Demo mode
-      storedRequest.status = "completed";
-      storedRequest.attestationHash =
-        "0xdemo" + Math.random().toString(16).slice(2, 10);
-      console.log(`Demo mode: Verification simulated for ${userAddress}`);
-    } else {
-      storedRequest.status = "failed";
-    }
+    // Issue EAS attestation on Celo
+    const providerNames = multiProviderResult.providerResults
+      .map((r) => r.provider)
+      .join("+");
 
-    const demoMode = multiProviderResult.demoMode;
+    const easAttestation = await issueKYHCredential(
+      userAddress,
+      level as "starter" | "basic" | "standard" | "enhanced",
+      providerNames,
+      !multiProviderResult.overallSuccess || multiProviderResult.demoMode
+    );
+
+    storedRequest.attestationHash = easAttestation.uid;
+    storedRequest.status = multiProviderResult.overallSuccess ? "completed" : "failed";
+
+    console.log(
+      `Verification ${storedRequest.status} for ${userAddress}: ${easAttestation.uid} (demo: ${easAttestation.demoMode})`
+    );
+
+    const demoMode = easAttestation.demoMode;
 
     const verificationPlan = getVerificationPlan(level as "starter" | "basic" | "standard" | "enhanced");
 
@@ -248,6 +231,7 @@ export async function POST(request: NextRequest) {
       selfVerificationUrl: selfSession.verificationUrl,
       selfQrData: selfSession.qrData,
       attestationHash: storedRequest.attestationHash,
+      attestation: formatAttestationResponse(easAttestation),
       paymentReceipt,
       verificationPlan: {
         providers: verificationPlan.providers,

@@ -24,7 +24,7 @@ const endpoints: Endpoint[] = [
     method: "POST",
     path: "/api/verification",
     description:
-      "Request a new KYC verification session for a user. Returns a session ID and verification URL to send to the user. Payment via x402 required ($0.25–$5.00 cUSD depending on level).",
+      "Request a new KYC verification session for a user. Returns a session ID and verification URL to send to the user. Payment via x402 required ($0.001–$0.75 cUSD depending on level).",
     requestBody: `{
   "userAddress": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
   "agentAddress": "0x3fA8B653F9abf91428800C8bB0AB9d8fE8c7A8c3",
@@ -35,7 +35,7 @@ const endpoints: Endpoint[] = [
 // Fields:
 // userAddress  (required) - Wallet address of the user to verify
 // agentAddress (optional) - Wallet address of the requesting agent
-// level        (required) - "basic" | "standard" | "enhanced"
+// level        (required) - "starter" | "basic" | "standard" | "enhanced"
 // webhookUrl   (optional) - POST webhook when verification completes`,
     responseBody: `{
   "sessionId": "kyc_x7k2m9p4n1q8r3s5",
@@ -146,7 +146,7 @@ curl -X POST ${BASE_URL}/api/verification/kyc_x7k2m9p4n1q8r3s5/callback \\
   -H "Content-Type: application/json" \\
   -d '{"demo": true}'`,
     notes:
-      "In production, this endpoint verifies the ZK-SNARK proof from Self Protocol and issues an on-chain attestation via Celo's FederatedAttestations contract.",
+      "In production, this endpoint verifies the ZK-SNARK proof from Self Protocol and issues an EAS attestation on Celo — reusable for 7–90 days depending on tier.",
   },
   {
     id: "stats",

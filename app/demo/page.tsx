@@ -102,25 +102,29 @@ const selfQrData = JSON.stringify(
   2
 );
 
-const attestationCode = `// Attestation registered on Celo via FederatedAttestations
+const attestationCode = `// EAS attestation issued on Celo
 {
   "verificationId": "${DEMO_SESSION_ID}",
   "status": "completed",
   "level": "standard",
   "userAddress": "${DEMO_USER_ADDRESS}",
   "attestation": {
-    "txHash": "${DEMO_ATTESTATION_HASH}",
-    "network": "celo-sepolia",
-    "contract": "0xFederatedAttestations...",
-    "issuedAt": "2026-03-18T03:01:42Z",
-    "expiresAt": "2027-03-18T03:01:42Z"
+    "uid": "${DEMO_ATTESTATION_HASH}",
+    "network": "celo-alfajores",
+    "easContract": "0x72E1d8ccf5299fb36fEfD8CC4394B8ef7e98Af92",
+    "issuedAt": "2026-03-21T14:00:00Z",
+    "expiresAt": "2026-05-20T14:00:00Z",
+    "validityDays": 60,
+    "easScanUrl": "https://celo.easscan.org/attestation/view/0xb9c4..."
   },
-  "zkProof": {
-    "verified": true,
-    "isHuman": true,
-    "isAdult": true,
-    "nationality": "CA",
-    "nullifier": "0x${Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}"
+  "providerResults": {
+    "overallSuccess": true,
+    "totalChecks": 3,
+    "passedChecks": 3,
+    "providers": [
+      { "provider": "human-passport", "success": true,
+        "checks": ["document", "liveness", "face-match"] }
+    ]
   }
 }`;
 
@@ -302,9 +306,9 @@ export default function DemoPage() {
             📱
           </div>
           <div>
-            <h3 className="text-white font-semibold">User Scans Passport</h3>
+            <h3 className="text-white font-semibold">Human Verifies Identity</h3>
             <p className="text-gray-400 text-sm">
-              Self Protocol app generates ZK proof on-device — no PII transmitted
+              Verification fan-out: providers run in parallel, ZK proofs generated on-device
             </p>
           </div>
         </div>
@@ -407,7 +411,7 @@ export default function DemoPage() {
               Attestation On-Chain
             </h3>
             <p className="text-gray-400 text-sm">
-              ZK proof verified, attestation registered on Celo Sepolia
+              ZK proofs verified, EAS attestation issued on Celo — valid 60 days
             </p>
           </div>
         </div>
@@ -447,7 +451,7 @@ export default function DemoPage() {
               {DEMO_ATTESTATION_HASH}
             </a>
             <p className="text-xs text-gray-600 mt-1">
-              ↗ View on CeloScan Sepolia
+              ↗ View on EAS Scan (celo.easscan.org)
             </p>
           </div>
         </div>
