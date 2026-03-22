@@ -16,7 +16,7 @@ interface Endpoint {
   notes?: string;
 }
 
-const BASE_URL = "https://kyc-gateway.vercel.app";
+const BASE_URL = "https://knowyourhuman.xyz";
 
 const endpoints: Endpoint[] = [
   {
@@ -41,7 +41,7 @@ const endpoints: Endpoint[] = [
   "sessionId": "kyc_x7k2m9p4n1q8r3s5",
   "status": "pending",
   "level": "standard",
-  "verifyUrl": "https://kyc-gateway.vercel.app/verify/kyc_x7k2m9p4n1q8r3s5",
+  "verifyUrl": "https://knowyourhuman.xyz/verify/kyc_x7k2m9p4n1q8r3s5",
   "expiresAt": "2026-03-18T04:01:00Z",
   "fee": {
     "amount": "1.50",
@@ -232,10 +232,10 @@ async function requestKYC(userAddress: string) {
 // Or use webhooks (recommended)
 // POST webhookUrl receives: { event: "verification.completed", attestationHash }`;
 
-const sdkCode = `// npm install @kyc-gateway/sdk (coming soon)
-import { KYCGateway } from "@kyc-gateway/sdk";
+const sdkCode = `// npm install @knowyourhuman/sdk (coming soon)
+import { KYH } from "@knowyourhuman/sdk";
 
-const gateway = new KYCGateway({
+const gateway = new KYH({
   apiKey: process.env.KYC_GATEWAY_KEY,
   agentAddress: process.env.AGENT_ADDRESS,
   network: "celo",
@@ -460,7 +460,7 @@ export default function DocsPage() {
               <CodeBlock
                 code={sdkCode}
                 language="typescript"
-                title="@kyc-gateway/sdk"
+                title="@knowyourhuman/sdk"
               />
             </div>
           </div>

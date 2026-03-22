@@ -19,7 +19,7 @@ const steps = [
   { id: 4, label: "Attestation" },
 ];
 
-const apiRequestCode = `POST https://kyc-gateway.vercel.app/api/verification
+const apiRequestCode = `POST https://knowyourhuman.xyz/api/verification
 Content-Type: application/json
 Authorization: Bearer <agent_api_key>
 
@@ -40,7 +40,7 @@ Content-Type: application/json
     "scheme": "exact",
     "network": "celo",
     "maxAmountRequired": "1500000",
-    "resource": "https://kyc-gateway.vercel.app/api/verification",
+    "resource": "https://knowyourhuman.xyz/api/verification",
     "description": "Standard KYC verification fee",
     "mimeType": "application/json",
     "payTo": "0xKYCGateway...",
@@ -59,7 +59,7 @@ const fetch = withPaymentInterceptor(globalThis.fetch, {
 
 // Agent retries with automatic payment
 const response = await fetch(
-  "https://kyc-gateway.vercel.app/api/verification",
+  "https://knowyourhuman.xyz/api/verification",
   {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -79,7 +79,7 @@ X-PAYMENT-RESPONSE: eyJzdWNjZXNzIjp0cnVlLCJ0eEhhc2giOi...
   "sessionId": "${DEMO_SESSION_ID}",
   "status": "pending",
   "level": "standard",
-  "verifyUrl": "https://kyc-gateway.vercel.app/verify/${DEMO_SESSION_ID}",
+  "verifyUrl": "https://knowyourhuman.xyz/verify/${DEMO_SESSION_ID}",
   "expiresAt": "2026-03-18T04:01:00Z",
   "paymentTxHash": "0xc7f1e3a2b4d6f8a0c2e4b6d8f0a2c4e6...",
   "fee": {
@@ -95,7 +95,7 @@ const selfQrData = JSON.stringify(
     sessionId: DEMO_SESSION_ID,
     userAddress: DEMO_USER_ADDRESS,
     scope: ["humanity_proof", "nationality", "age_18_plus"],
-    callbackUrl: `https://kyc-gateway.vercel.app/api/verification/${DEMO_SESSION_ID}/callback`,
+    callbackUrl: `https://knowyourhuman.xyz/api/verification/${DEMO_SESSION_ID}/callback`,
     network: "celo",
   },
   null,

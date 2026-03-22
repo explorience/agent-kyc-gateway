@@ -46,7 +46,7 @@ export default function Header() {
 
           {/* GitHub link */}
           <a
-            href="https://github.com/explorience/agent-kyc-gateway"
+            href="https://github.com/explorience/know-your-human"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:text-white transition-colors border border-gray-700 hover:border-gray-500"

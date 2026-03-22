@@ -55,7 +55,7 @@ export default function Footer() {
                 { href: "https://self.xyz", label: "Self Protocol" },
                 { href: "https://x402.org", label: "x402 Protocol" },
                 {
-                  href: "https://github.com/explorience/agent-kyc-gateway",
+                  href: "https://github.com/explorience/know-your-human",
                   label: "GitHub",
                 },
               ].map((link) => (

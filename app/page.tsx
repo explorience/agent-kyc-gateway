@@ -313,7 +313,7 @@ export default function LandingPage() {
                 🚀 Try the Demo
               </Link>
               <a
-                href="https://github.com/explorience/agent-kyc-gateway"
+                href="https://github.com/explorience/know-your-human"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-secondary text-base px-6 py-3"
