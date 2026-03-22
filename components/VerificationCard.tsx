@@ -64,7 +64,7 @@ export default function VerificationCard({
 
   return (
     <div
-      className={`relative rounded-2xl p-6 border transition-all duration-200 ${
+      className={`relative rounded-2xl p-6 sm:p-7 border transition-all duration-200 ${
         highlighted
           ? `${config.bgColor} ${config.borderColor} shadow-lg`
           : "bg-[#111827] border-gray-800 hover:border-gray-600"
@@ -79,7 +79,7 @@ export default function VerificationCard({
       )}
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-4">
         <div>
           <div className="text-2xl mb-1">{config.icon}</div>
           <h3 className={`text-lg font-bold ${config.color}`}>{config.name}</h3>
@@ -99,7 +99,7 @@ export default function VerificationCard({
       </div>
 
       {/* Features */}
-      <ul className="space-y-2 mb-6">
+      <ul className="space-y-3 mb-6">
         {features.map((feature, i) => (
           <li key={i} className="flex items-center gap-2 text-sm text-gray-300">
             <svg

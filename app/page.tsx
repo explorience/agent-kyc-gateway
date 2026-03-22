@@ -71,7 +71,7 @@ export default function LandingPage() {
       <Header />
 
       {/* Hero section */}
-      <section className="pt-32 pb-20 px-4 relative overflow-hidden">
+      <section className="pt-40 pb-24 px-4 sm:px-6 relative overflow-hidden">
         <div
           className="absolute top-20 left-1/4 w-96 h-96 rounded-full opacity-10 blur-3xl pointer-events-none"
           style={{
@@ -85,7 +85,7 @@ export default function LandingPage() {
           }}
         />
 
-        <div className="max-w-5xl mx-auto text-center relative z-10">
+        <div className="w-full max-w-5xl mx-auto text-center relative z-10 px-2">
           <div className="flex items-center justify-center gap-2 mb-6">
             <span className="badge badge-green text-xs">
               🏆 Celo Hackathon 2026
@@ -114,7 +114,7 @@ export default function LandingPage() {
             Zero PII stored.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
             <Link href="/demo" className="btn-primary text-base px-6 py-3">
               🚀 Try Live Demo
             </Link>
@@ -133,20 +133,20 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing tiers */}
-      <section className="py-20 px-4" id="pricing">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
+      <section className="py-24 px-4 sm:px-6" id="pricing">
+        <div className="w-full max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-black text-white mb-6">
               Four Tiers.{" "}
               <span className="gradient-text">One API.</span>
             </h2>
-            <p className="text-gray-400 max-w-lg mx-auto">
+            <p className="text-gray-400 max-w-lg mx-auto leading-relaxed">
               Pay per verification in cUSD on Celo. No subscriptions, no minimums.
               Agents pay automatically via x402. Credentials reusable for 7–90 days.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             <VerificationCard
               tier="starter"
               price="$0.001"
@@ -199,7 +199,7 @@ export default function LandingPage() {
           </div>
 
           {/* Sponsor economics callout */}
-          <div className="mt-10 rounded-2xl p-6 border border-[#35D07F]/20 bg-[#35D07F]/5 max-w-3xl mx-auto text-center">
+          <div className="mt-14 rounded-2xl p-8 border border-[#35D07F]/20 bg-[#35D07F]/5 max-w-3xl mx-auto text-center">
             <p className="text-sm text-[#35D07F] font-semibold mb-1">💡 Sponsor Economics</p>
             <p className="text-gray-300 text-sm leading-relaxed">
               The first agent to verify a human earns back up to <strong className="text-white">2× their cost</strong> as
@@ -211,22 +211,22 @@ export default function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section className="py-20 px-4 bg-gradient-to-b from-transparent to-[#0d1117]/50" id="how">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
+      <section className="py-24 px-4 sm:px-6 bg-gradient-to-b from-transparent to-[#0d1117]/50" id="how">
+        <div className="w-full max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-black text-white mb-6">
               How It <span className="gradient-text">Works</span>
             </h2>
-            <p className="text-gray-400 max-w-lg mx-auto">
+            <p className="text-gray-400 max-w-lg mx-auto leading-relaxed">
               Verify once. Reuse forever. Any agent or dApp checks the credential with a single contract call.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {howItWorks.map((step) => (
               <div
                 key={step.step}
-                className="glass-card rounded-2xl p-6 flex gap-4"
+                className="glass-card rounded-2xl p-8 flex gap-5"
               >
                 <div className="flex flex-col items-center">
                   <div className="w-10 h-10 rounded-xl bg-[#35D07F]/10 border border-[#35D07F]/30 flex items-center justify-center text-xl flex-shrink-0">
@@ -247,19 +247,19 @@ export default function LandingPage() {
       </section>
 
       {/* Use cases */}
-      <section className="py-20 px-4" id="use-cases">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
+      <section className="py-24 px-4 sm:px-6" id="use-cases">
+        <div className="w-full max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-black text-white mb-6">
               Real <span className="gradient-text">Use Cases</span>
             </h2>
-            <p className="text-gray-400 max-w-lg mx-auto">
+            <p className="text-gray-400 max-w-lg mx-auto leading-relaxed">
               Anywhere an agent or dApp needs to know: is this wallet a verified human?
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             {useCases.map((uc) => (
-              <div key={uc.title} className="glass-card rounded-2xl p-6">
+              <div key={uc.title} className="glass-card rounded-2xl p-8">
                 <div className="text-3xl mb-3">{uc.icon}</div>
                 <h3 className="text-white font-semibold mb-2">{uc.title}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{uc.desc}</p>
@@ -270,8 +270,8 @@ export default function LandingPage() {
       </section>
 
       {/* Tech stack */}
-      <section className="py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center">
+      <section className="py-20 px-4 sm:px-6">
+        <div className="w-full max-w-4xl mx-auto text-center">
           <p className="text-xs text-gray-600 uppercase tracking-widest mb-6 font-semibold">
             Powered By
           </p>
@@ -286,8 +286,8 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 px-4">
-        <div className="max-w-3xl mx-auto">
+      <section className="py-24 px-4 sm:px-6">
+        <div className="w-full max-w-3xl mx-auto">
           <div
             className="rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden"
             style={{
