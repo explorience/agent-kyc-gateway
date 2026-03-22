@@ -14,12 +14,11 @@
  *   Enhanced: 90 days
  */
 
-export const EAS_CONTRACT_CELO = "0x72E1d8ccf5299fb36fEfD8CC4394B8ef7e98Af92";
-export const EAS_CONTRACT_ALFAJORES = "0x72E1d8ccf5299fb36fEfD8CC4394B8ef7e98Af92";
+// EAS is only deployed on Celo Mainnet (not on any testnet)
+export const EAS_CONTRACT = "0x72E1d8ccf5299fb36fEfD8CC4394B8ef7e98Af92";
+export const SCHEMA_REGISTRY = "0x5ece93bE4BDCF293Ed61FA78698B594F2135AF34";
 export const CUSD_CELO = "0x765DE816845861e75A25fCA122bb6898B8B1282a";
-export const CUSD_ALFAJORES = "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1";
 export const CELO_RPC = "https://forno.celo.org";
-export const ALFAJORES_RPC = "https://alfajores-forno.celo-testnet.org";
 
 export const VALIDITY_WINDOWS: Record<string, number> = {
   starter: 7 * 24 * 60 * 60,
@@ -78,7 +77,7 @@ export async function issueKYHCredential(
   const now = Math.floor(Date.now() / 1000);
   const expiresAt = now + VALIDITY_WINDOWS[level];
   const levelNum = LEVEL_NUMBERS[level];
-  const network = process.env.CELO_NETWORK === "mainnet" ? "celo" : "celo-alfajores";
+  const network = "celo"; // EAS only on mainnet
 
   if (demoMode || !isEASConfigured()) {
     return {
@@ -111,8 +110,8 @@ export async function issueKYHCredential(
     const { ethers } = require("ethers") as typeof import("ethers");
     const { EAS, SchemaEncoder } = easSdk;
 
-    const rpcUrl = network === "celo" ? CELO_RPC : ALFAJORES_RPC;
-    const easAddress = network === "celo" ? EAS_CONTRACT_CELO : EAS_CONTRACT_ALFAJORES;
+    const rpcUrl = CELO_RPC;
+    const easAddress = EAS_CONTRACT;
 
     const providerRpc = new ethers.JsonRpcProvider(rpcUrl);
     const signer = new ethers.Wallet(process.env.ISSUER_PRIVATE_KEY!, providerRpc);
@@ -195,7 +194,7 @@ export async function checkKYHCredential(
     const { ethers } = require("ethers") as typeof import("ethers");
 
     const providerRpc = new ethers.JsonRpcProvider(CELO_RPC);
-    const eas = new EAS(EAS_CONTRACT_CELO);
+    const eas = new EAS(EAS_CONTRACT);
     eas.connect(providerRpc);
 
     const attestation = await eas.getAttestation(attestationUID);
