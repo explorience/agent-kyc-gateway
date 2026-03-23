@@ -13,7 +13,7 @@ const DEMO_SESSION_ID = "kyc_x7k2m9p4n1q8r3s5";
 const DEMO_ATTESTATION_HASH = "0xb9c4f2a7e1d8b3c6f0a4e2d7b1c5f3a8e6d2b0c4f7a1e5d9b3c7f2a0e4d8b6c1";
 
 const steps = [
-  { id: 1, label: "API Request" },
+  { id: 1, label: "Credential Check" },
   { id: 2, label: "x402 Payment" },
   { id: 3, label: "ID Verify" },
   { id: 4, label: "Attestation" },
@@ -110,11 +110,11 @@ const attestationCode = `// EAS attestation issued on Celo
   "userAddress": "${DEMO_USER_ADDRESS}",
   "attestation": {
     "uid": "${DEMO_ATTESTATION_HASH}",
-    "network": "celo-alfajores",
+    "network": "celo",
     "easContract": "0x72E1d8ccf5299fb36fEfD8CC4394B8ef7e98Af92",
     "issuedAt": "2026-03-21T14:00:00Z",
-    "expiresAt": "2026-05-20T14:00:00Z",
-    "validityDays": 60,
+    "expiresAt": "2026-06-19T14:00:00Z",
+    "validityDays": 90,
     "easScanUrl": "https://celo.easscan.org/attestation/view/0xb9c4..."
   },
   "providerResults": {
@@ -122,8 +122,10 @@ const attestationCode = `// EAS attestation issued on Celo
     "totalChecks": 3,
     "passedChecks": 3,
     "providers": [
-      { "provider": "human-passport", "success": true,
-        "checks": ["document", "liveness", "face-match"] }
+      { "provider": "self-protocol", "success": true,
+        "checks": ["zk-passport", "nationality", "age"] },
+      { "provider": "didit", "success": true,
+        "checks": ["liveness", "face-match"] }
     ]
   }
 }`;
@@ -182,43 +184,60 @@ export default function DemoPage() {
         <div>
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-xl">
-              🤖
+              🔍
             </div>
             <div>
-              <h3 className="text-white font-semibold">Agent Requests KYC</h3>
+              <h3 className="text-white font-semibold">Check Existing Credential</h3>
               <p className="text-gray-400 text-sm">
-                Your AI agent calls the KYC Gateway REST API
+                Agent first checks if this wallet already has a valid credential. If it does, the EAS attestation is returned for free.
               </p>
             </div>
           </div>
           <CodeBlock
-            code={apiRequestCode}
+            code={`GET https://knowyourhuman.xyz/api/check/${DEMO_USER_ADDRESS}
+
+// Response — no credential found:
+{
+  "address": "${DEMO_USER_ADDRESS}",
+  "hasCredential": false,
+  "message": "No active credential. Use POST /api/verification to verify."
+}
+
+// If a credential existed, it would return:
+{
+  "address": "${DEMO_USER_ADDRESS}",
+  "hasCredential": true,
+  "attestation": {
+    "uid": "0xb9c4f2a7...",
+    "level": "standard",
+    "issuedAt": "2026-03-21T14:00:00Z",
+    "expiresAt": "2026-06-19T14:00:00Z",
+    "validDays": 90
+  }
+  // Free. No payment needed. Any agent can read this.
+}`}
             language="http"
-            title="POST /api/verification"
+            title="GET /api/check/:address — Free, no auth"
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 text-center">
-            <div className="text-2xl mb-2">🔐</div>
-            <div className="text-white font-medium text-sm">Zero PII</div>
-            <div className="text-gray-500 text-xs mt-1">
-              Only wallet addresses used
-            </div>
-          </div>
-          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 text-center">
-            <div className="text-2xl mb-2">⚡</div>
-            <div className="text-white font-medium text-sm">Sub-second</div>
-            <div className="text-gray-500 text-xs mt-1">API response time</div>
-          </div>
-          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 text-center">
-            <div className="text-2xl mb-2">🌐</div>
-            <div className="text-white font-medium text-sm">
-              Any Language
-            </div>
-            <div className="text-gray-500 text-xs mt-1">REST API standard</div>
-          </div>
+        <div className="rounded-2xl p-4 border bg-[#35D07F]/5 border-[#35D07F]/20">
+          <p className="text-[#35D07F] text-sm font-medium mb-1">
+            This check is always free.
+          </p>
+          <p className="text-gray-400 text-sm">
+            Any agent, any dApp, any protocol can read an existing credential at no cost.
+            The human only needs to verify once. After that, their credential is a public good on Celo.
+          </p>
         </div>
+
+        <p className="text-gray-500 text-sm">No credential found for this wallet. Agent proceeds to request a new verification.</p>
+
+        <CodeBlock
+          code={apiRequestCode}
+          language="http"
+          title="POST /api/verification — New verification request"
+        />
 
         <button onClick={advanceStep} className="btn-primary w-full justify-center py-3">
           Next: x402 Payment →
@@ -236,7 +255,7 @@ export default function DemoPage() {
             <div>
               <h3 className="text-white font-semibold">x402 Micropayment</h3>
               <p className="text-gray-400 text-sm">
-                Gateway returns 402, agent pays $1.50 cUSD automatically
+                Gateway returns 402, agent pays fee in cUSD automatically
               </p>
             </div>
           </div>
@@ -308,7 +327,7 @@ export default function DemoPage() {
           <div>
             <h3 className="text-white font-semibold">Human Verifies Identity</h3>
             <p className="text-gray-400 text-sm">
-              Verification fan-out: providers run in parallel, ZK proofs generated on-device
+              ZK passport proof via Self Protocol. For higher tiers, Didit adds biometric liveness and AML screening. Providers are modular: new identity services can be added at any time.
             </p>
           </div>
         </div>
@@ -411,7 +430,7 @@ export default function DemoPage() {
               Attestation On-Chain
             </h3>
             <p className="text-gray-400 text-sm">
-              ZK proofs verified, EAS attestation issued on Celo — valid 60 days
+              ZK proofs verified, EAS attestation issued on Celo. Valid 90 days.
             </p>
           </div>
         </div>
@@ -443,7 +462,7 @@ export default function DemoPage() {
               Attestation TX:
             </p>
             <a
-              href={`https://celo-sepolia.celoscan.io/tx/${DEMO_ATTESTATION_HASH}`}
+              href={`https://celoscan.io/tx/${DEMO_ATTESTATION_HASH}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#35D07F] text-xs font-mono hover:underline break-all"
@@ -514,14 +533,14 @@ export default function DemoPage() {
           <div className="text-center mb-10">
             <div className="flex items-center justify-center gap-2 mb-4">
               <span className="badge badge-green text-xs">🚀 Live Demo</span>
-              <span className="badge badge-blue text-xs">Celo Sepolia</span>
+              <span className="badge badge-green text-xs">Live on Celo</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-black text-white mb-3">
               Interactive{" "}
               <span className="gradient-text">KYC Flow</span>
             </h1>
             <p className="text-gray-400 max-w-xl mx-auto">
-              Walk through the full verification flow — from agent API request
+              Walk through the full verification flow, from agent API request
               to on-chain attestation.
             </p>
           </div>

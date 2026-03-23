@@ -171,7 +171,7 @@ export default function VerifyPage() {
                 />
                 {status.attestationHash && (
                   <a
-                    href={`https://celo-sepolia.blockscout.com/tx/${status.attestationHash}`}
+                    href={`https://celo.blockscout.com/tx/${status.attestationHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-4 inline-flex items-center gap-2 text-[#35D07F] text-sm hover:underline"

@@ -186,6 +186,7 @@ export default function LandingPage() {
             <p className="text-gray-400 max-w-lg mx-auto leading-relaxed">
               Pay per verification in cUSD on Celo. No subscriptions, no minimums.
               Reputation tier is free. Agents with Self Agent ID get 20% off.
+              Identity providers are modular: new verification services can be added at any time.
             </p>
           </div>
 

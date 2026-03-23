@@ -159,7 +159,7 @@ export default function ExplorerPage() {
           <div className="text-center mb-10">
             <div className="flex items-center justify-center gap-2 mb-4">
               <span className="badge badge-green text-xs">🔍 On-Chain Data</span>
-              <span className="badge badge-blue text-xs">Celo Sepolia</span>
+              <span className="badge badge-blue text-xs">Live on Celo</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-black text-white mb-3">
               Attestation{" "}
@@ -264,7 +264,7 @@ export default function ExplorerPage() {
                     : `${results.length} attestation${results.length !== 1 ? "s" : ""} found`}
                 </h2>
                 <span className="text-xs text-gray-500 font-mono">
-                  Network: Celo Sepolia
+                  Network: Live on Celo
                 </span>
               </div>
 
@@ -322,7 +322,7 @@ export default function ExplorerPage() {
                           <div className="text-xs text-gray-500 font-mono mb-1">
                             TX:{" "}
                             <a
-                              href={`https://celo-sepolia.celoscan.io/tx/${att.txHash}`}
+                              href={`https://celoscan.io/tx/${att.txHash}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-[#35D07F] hover:underline"
@@ -338,7 +338,7 @@ export default function ExplorerPage() {
 
                         {/* CeloScan button */}
                         <a
-                          href={`https://celo-sepolia.celoscan.io/tx/${att.txHash}`}
+                          href={`https://celoscan.io/tx/${att.txHash}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="btn-secondary text-xs px-3 py-2 flex items-center gap-1.5 whitespace-nowrap"
@@ -433,7 +433,7 @@ export default function ExplorerPage() {
                             </td>
                             <td className="px-4 py-4">
                               <a
-                                href={`https://celo-sepolia.celoscan.io/tx/${att.txHash}`}
+                                href={`https://celoscan.io/tx/${att.txHash}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-[#35D07F] font-mono text-xs hover:underline"

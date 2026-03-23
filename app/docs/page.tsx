@@ -98,7 +98,7 @@ curl -X POST ${BASE_URL}/api/verification \\
   "attestationHash": "0xa3f8e2b1c4d9f6a0b7e3c5d8f1a2b4c6d0e7f9a1b3c5d7e9f2a4b6c8d0e2f4a6",
   "issuedAt": "2026-03-18T03:01:42Z",
   "expiresAt": "2027-03-18T03:01:42Z",
-  "network": "celo-sepolia"
+  "network": "celo"
 }
 
 // If no attestation exists:
@@ -167,7 +167,7 @@ curl -X POST ${BASE_URL}/api/verification/kyc_x7k2m9p4n1q8r3s5/callback \\
     "amount": "1892.50",
     "currency": "cUSD"
   },
-  "network": "celo-sepolia",
+  "network": "celo",
   "demoMode": true,
   "uptime": "99.9%"
 }`,

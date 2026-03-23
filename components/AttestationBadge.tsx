@@ -83,7 +83,7 @@ export default function AttestationBadge({
         )}
         {txHash && (
           <a
-            href={`https://alfajores.celoscan.io/tx/${txHash}`}
+            href={`https://celoscan.io/tx/${txHash}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-[#35D07F] hover:underline mt-0.5 block font-mono truncate"
