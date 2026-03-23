@@ -1,91 +1,130 @@
-# Hackathon Submission: Know Your Human (KYH)
+# Know Your Human (KYH) — Hackathon Submission
 
 **Tagline:** Your identity follows you to Celo.
 
-**Live Demo:** [knowyourhuman.xyz](https://knowyourhuman.xyz)
-**GitHub:** [github.com/explorience/know-your-human](https://github.com/explorience/know-your-human)
+**Live:** [knowyourhuman.xyz](https://knowyourhuman.xyz)
+**Code:** [github.com/explorience/know-your-human](https://github.com/explorience/know-your-human)
+**EAS Schema:** [`0x23b867...d5ab`](https://celo.easscan.org/schema/view/0x23b867f11eb49a6d94a6490e11aa2c4fd2dbbda5950b8444281ed2953daad5ab) on Celo mainnet
+**ERC-8004:** Agent #24212 on Base ([basescan](https://basescan.org/tx/0x8e3991a55210e4d8238d4aaf070b6af1c7484d8484bb6847bb6f04120389f566))
 
 ---
 
-## Problem
+## What KYH Does
 
-AI agents and dApps increasingly need to verify human identity — for lending, governance, remittances, and compliance. Current KYC solutions are:
+KYH is a unified identity verification gateway for AI agents. One API endpoint. Four verification tiers. Pay-per-use via x402 in cUSD. Result: an EAS attestation on Celo — free to read forever.
 
-- **Fragmented** — each provider has its own API, credentials, and format
-- **Expensive** — monthly minimums and enterprise contracts
-- **Siloed** — verification results don't transfer between apps
+```
+GET  /api/check/0xABC     → { verified: true, tier: "biometric", expires: "..." }   // FREE
+POST /api/verify           → 402 → pay cUSD → human verifies → EAS attestation      // $0-$0.75
+```
+
+## Why It Matters
+
+AI agents need to verify human identity for lending, governance, remittances, and compliance. Current KYC is:
+- **Fragmented** — each provider has its own API, credentials, format
+- **Expensive** — monthly minimums, enterprise contracts
+- **Siloed** — credentials don't transfer between apps
 - **Web2** — API keys, dashboards, manual sign-ups
 
-There's no shared, reusable, on-chain credential for "this wallet belongs to a verified human."
+KYH solves this with a single endpoint that aggregates multiple providers and produces a portable, on-chain credential.
 
-## Solution
+## What Makes It Novel
 
-**Know Your Human** is a unified KYC gateway that:
+1. **First agent-callable KYC service.** No existing service offers multi-provider identity verification accessible via a single HTTP endpoint with on-chain credentials. We searched extensively — nothing exists.
 
-1. **Aggregates multiple verification providers** — Self Protocol (ZK passport proofs), Human Passport (social + activity scoring), and Didit (biometric KYC + AML)
-2. **Charges via x402 micropayments** — $0.001 to $0.75 in cUSD per verification. No API keys, no sign-ups. The wallet IS the identity.
-3. **Issues EAS attestations on Celo** — valid for 90 days. Free to read forever by any agent or dApp. Pure public good.
-4. **Uses ERC-8004 for agent identity** — agents identify themselves on-chain. KYH is Agent #24212.
+2. **x402 micropayments.** No API keys. No accounts. No sign-ups. The server returns HTTP 402, the agent pays in cUSD on Celo, verification proceeds. The wallet IS the identity.
 
-**Verify once. Credential lives on-chain. Any agent reads it for free.**
+3. **Multi-provider aggregation.** One API, three verification backends (Self Protocol, Didit, Human Passport), four tiers. Pick the assurance level your use case needs.
+
+4. **Permanent, unopinionated EAS schema.** Four bytes32/uint8 fields designed to last decades. Any project can issue any credential type using this schema without coordination.
+
+5. **Self Agent ID integration.** Agents verified via Self Agent ID get 20% off. Both sides verified: agents prove they're human-backed (Self Agent ID), humans prove their identity (KYH). Ecosystem flywheel.
+
+6. **Honest tiers.** Each tier documents what it proves AND what it doesn't. Reputation scoring gives bots 86/100 — we say that upfront.
 
 ## How It Uses Celo
 
-- **x402 payments in cUSD** — Celo's stablecoin enables sub-cent micropayments ($0.001 per check)
-- **EAS attestations on Celo mainnet** — identity credentials stored as on-chain attestations
-- **Celo's low gas costs** — makes per-verification attestations economically viable
-- **cUSD stability** — verification costs are predictable, not volatile
+- **x402 payments in cUSD** — Celo's stablecoin enables sub-cent micropayments (free–$0.75)
+- **EAS attestations on Celo mainnet** — identity credentials stored as permanent on-chain attestations
+- **Celo's low gas** — makes per-verification attestations economically viable (~$0.001/attestation)
+- **cUSD stability** — verification costs are predictable, denominated in a stablecoin
+- **Self Agent ID registry on Celo** — agent identity verification uses Celo's agent registry
 
-## Four Tiers
+## Tiers
 
-| Tier | Price | Provider | Method |
-|------|-------|----------|--------|
-| Starter | $0.001 | Human Passport | Phone + social presence scoring |
-| Basic | $0.01 | Self Protocol | NFC passport chip → ZK-SNARK proof |
-| Standard | $0.25 | Didit | Gov ID scan + liveness + face match |
-| Enhanced | $0.75 | All three | Full biometric KYC + AML screening |
+| Tier | Price | Provider | What It Proves | What It Doesn't |
+|------|-------|----------|---------------|-----------------|
+| **Reputation** | Free | Human Passport | Onchain activity consistent with real user | Not identity — bots with history can pass |
+| **Document** | $0.01 | Self Protocol | A real passport was physically present (NFC + ZK) | Not that the tapper is the passport holder |
+| **Biometric** | $0.25 | Didit | A real person is present, matches gov ID, clean IP | Not sanctions/AML status |
+| **Full KYC** | $0.75 | Self + Didit | Passport + biometric + AML/sanctions | — |
 
-## What's Novel
+Self Agent ID holders get 20% off all paid tiers.
 
-- **Multi-provider aggregation** — one API, three verification backends, four tiers. Pick your assurance level.
-- **x402 pay-per-verification** — no API keys, no accounts. Just an HTTP endpoint that returns 402 until you pay. Truly web3-native billing.
-- **ERC-8004 agent identity** — requesting agents are identifiable on-chain. Builds trust and reputation.
-- **Tiered public good** — low barrier ($0.001) for basic proof of humanity, higher assurance available. Credential is free to read once issued.
-- **Your identity follows you to Celo** — verification data from any chain (HP activity scores, Self passport proofs) results in a Celo-native credential.
+## EAS Schema
+
+```
+bytes32 credentialType      // keccak256("PASSPORT_ZK"), keccak256("BIOMETRIC_LIVENESS"), etc.
+uint8   assuranceLevel      // 0-255, meaning per credentialType
+bytes32 verificationMethod  // keccak256("SELF_PROTOCOL"), keccak256("DIDIT"), etc.
+bytes32 evidenceRef         // off-chain reference (IPFS, content hash)
+```
+
+Registered on Celo mainnet. 97 bytes calldata. Revocable. 90-day validity. Designed for permanent, cross-project use.
 
 ## Architecture
 
 ```
-Agent/dApp (ERC-8004 or wallet)
-        ↓ x402 payment in cUSD
-    KYH Gateway
-        ↓ routes to provider
-Self Protocol / Human Passport / Didit
-        ↓ ZK proof or score
-    EAS Attestation on Celo
-        ↓ free to read
-    Any agent or dApp
+Agent/dApp → x402 cUSD → KYH Gateway → Self Protocol / Didit / HP
+                                              ↓
+                                     EAS Attestation on Celo
+                                              ↓
+                                     Free to read forever
 ```
+
+- Agent identified via ERC-8004 or wallet address
+- Self Agent ID verified via signed request headers (ECDSA recovery)
+- Multi-provider results aggregated into typed attestations
+- Each verification dimension gets its own attestation (composable)
+
+## Multi-Chain Ready
+
+Deployed on Celo. The same schema can be registered on any EAS-supported chain (Base, Optimism, Arbitrum, Ethereum) with a single transaction. Verification providers are chain-agnostic — only attestation issuance and payment are chain-specific.
+
+## Integration
+
+```typescript
+// Check if a wallet is verified (free)
+const res = await fetch("https://knowyourhuman.xyz/api/check/0xABC...");
+const { verified, tier } = await res.json();
+
+// Request verification
+const res = await fetch("https://knowyourhuman.xyz/api/verify", {
+  method: "POST",
+  body: JSON.stringify({ agentAddress: "0xME", userAddress: "0xHUMAN", tier: "biometric" })
+});
+// Returns 402 → pay cUSD → credential issued
+```
+
+Full guide: [docs/AGENT-GUIDE.md](docs/AGENT-GUIDE.md)
 
 ## Tech Stack
 
-- Next.js, TypeScript, Tailwind CSS
-- Celo (mainnet), EAS, x402
-- Self Protocol SDK (`@selfxyz/core`)
-- Human Passport API (`passport.xyz`)
-- Didit API v3 (`verification.didit.me`)
-- ERC-8004 (Agent #24212 on Base)
-- Vercel (deployment)
+Next.js 14, TypeScript, Tailwind CSS, Celo (mainnet), EAS, Self Protocol SDK, Self Agent ID SDK, Human Passport API, Didit API v3, x402, ERC-8004, Vercel.
+
+## Tracks
+
+- **Best Agent on Celo** — KYH is a Celo-native service: payments in cUSD, attestations on Celo EAS, Self Agent ID on Celo
+- **Best Self Protocol Integration** — ZK passport verification (Document tier) + Self Agent ID for agent identity and discount
+- **Agents With Receipts (ERC-8004)** — KYH is Agent #24212, uses ERC-8004 for agent identity, issues EAS receipts for every verification
+- **Agent Services on Base** — Multi-chain ready, ERC-8004 registered on Base
+- **Open Track** — First-of-kind agent KYC infrastructure
 
 ## Team
 
-- **Heenal Rajani** — builder, [Reimagine Co](https://reimagineco.ca). Community tech, regenerative economics, web3.
-- **Tej** — AI agent coordinator. ERC-8004 #24212. Built the gateway, wrote the code, debugged the APIs.
-
-## Demo Video
-
-_Link TBD_
+- **Heenal Rajani** ([@heenalr](https://twitter.com/heenalr)) — builder, [Reimagine Co](https://reimagineco.ca). Community tech, regenerative economics.
+- **heenai** ([@heen_ai](https://twitter.com/heen_ai)) — AI agent, ERC-8004 #24212. Built the gateway, integrated providers, designed the schema.
 
 ---
 
-Built for the **Celo "Build Agents for the Real World V2" Hackathon**, March 2026.
+Built for [The Synthesis Hackathon](https://synthesis.devfolio.co), March 2026.
