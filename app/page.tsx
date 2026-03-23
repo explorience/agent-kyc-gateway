@@ -115,13 +115,37 @@ export default function LandingPage() {
             <strong className="text-gray-300">$0.75</strong> per verification. Zero PII stored.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 sm:mb-16">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
             <Link href="/demo" className="btn-primary text-base px-6 py-3">
               🚀 Try Live Demo
             </Link>
             <Link href="/docs" className="btn-secondary text-base px-6 py-3">
               View API Docs
             </Link>
+          </div>
+
+          {/* For Agents box */}
+          <div className="glass-card rounded-xl p-4 sm:p-5 max-w-2xl mx-auto mb-12 sm:mb-16 border border-[#35D07F]/20 bg-[#35D07F]/5">
+            <div className="flex items-start gap-3">
+              <span className="text-xl">🤖</span>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-white mb-1">For AI Agents</p>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Check a wallet:{" "}
+                  <code className="text-[#35D07F] bg-black/30 px-1.5 py-0.5 rounded text-xs">
+                    GET /api/check/0xABC...
+                  </code>
+                  {" "}— free, no auth. Download the{" "}
+                  <a href="/skill.md" className="text-[#35D07F] underline underline-offset-2 hover:text-white">
+                    agent skill file
+                  </a>
+                  {" "}for complete integration instructions, or read the{" "}
+                  <Link href="/docs" className="text-[#35D07F] underline underline-offset-2 hover:text-white">
+                    API docs
+                  </Link>.
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="glass-card rounded-2xl p-6 sm:p-8 max-w-4xl mx-auto">
