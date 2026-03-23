@@ -37,17 +37,13 @@ const howItWorks = [
   },
 ];
 
-const techBadges = [
-  { label: "Celo", color: "badge-green", icon: "🟡" },
-  { label: "Venice AI", color: "badge-yellow", icon: "🧠" },
-  { label: "Self Protocol", color: "badge-blue", icon: "🔐" },
-  { label: "Human Passport", color: "badge-green", icon: "🛂" },
-  { label: "Didit", color: "badge-blue", icon: "🪪" },
-  { label: "x402", color: "badge-yellow", icon: "💸" },
-  { label: "ZK-SNARKs", color: "badge-green", icon: "⚡" },
-  { label: "EAS", color: "badge-blue", icon: "📜" },
-  { label: "ERC-8004", color: "badge-yellow", icon: "🤖" },
-  { label: "ENS", color: "badge-blue", icon: "🔗" },
+const techLogos = [
+  { label: "Celo", logo: "/logos/celo.svg", url: "https://celo.org" },
+  { label: "Venice AI", logo: "/logos/venice.svg", url: "https://venice.ai" },
+  { label: "Self Protocol", logo: "/logos/self.svg", url: "https://self.xyz" },
+  { label: "Didit", logo: "/logos/didit.svg", url: "https://didit.me" },
+  { label: "ENS", logo: "/logos/ens.svg", url: "https://ens.domains" },
+  { label: "EAS", logo: "/logos/eas.svg", url: "https://attest.org" },
 ];
 
 const useCases = [
@@ -413,17 +409,27 @@ export default function LandingPage() {
       {/* Tech stack */}
       <section className="py-16 sm:py-20 px-8 sm:px-12 lg:px-16">
         <div className="w-full max-w-3xl mx-auto text-center">
-          <p className="text-xs text-gray-600 uppercase tracking-widest mb-2 font-semibold">
-            Powered By
+          <p className="text-xs text-gray-600 uppercase tracking-widest mb-8 font-semibold">
+            Built With
           </p>
-          <p className="text-sm text-gray-500 mb-6 italic">
-            Your identity follows you to Celo.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {techBadges.map((badge) => (
-              <span key={badge.label} className={`badge ${badge.color} text-sm px-4 py-2`}>
-                {badge.icon} {badge.label}
-              </span>
+          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
+            {techLogos.map((tech) => (
+              <a
+                key={tech.label}
+                href={tech.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-all duration-200 group"
+              >
+                <img
+                  src={tech.logo}
+                  alt={tech.label}
+                  className="w-10 h-10 sm:w-12 sm:h-12 group-hover:scale-110 transition-all duration-200"
+                />
+                <span className="text-xs text-gray-500 group-hover:text-gray-300 font-medium">
+                  {tech.label}
+                </span>
+              </a>
             ))}
           </div>
         </div>
