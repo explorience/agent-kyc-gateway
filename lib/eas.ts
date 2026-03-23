@@ -155,10 +155,23 @@ export async function issueKYHCredential(
       },
     });
 
-    const uid = await tx.wait();
+    // EAS SDK returns different shapes depending on version
+    // Try tx.wait() for UID, and tx.tx?.hash or tx.receipt?.hash for tx hash
+    let uid: string;
+    let txHash: string;
+    
+    if (typeof tx === 'object' && 'wait' in tx) {
+      uid = (await tx.wait()) as string;
+      txHash = (tx as Record<string, unknown>).tx 
+        ? ((tx as Record<string, unknown>).tx as Record<string, string>).hash
+        : ((tx as Record<string, unknown>).receipt as Record<string, string>)?.transactionHash || "unknown";
+    } else {
+      uid = String(tx);
+      txHash = "unknown";
+    }
 
     return {
-      uid: uid as string,
+      uid,
       recipient: recipientAddress,
       level,
       levelNum,
@@ -166,7 +179,7 @@ export async function issueKYHCredential(
       expiresAt,
       issuedAt: now,
       demoMode: false,
-      transactionHash: tx.tx.hash,
+      transactionHash: txHash,
       network,
     };
   } catch (error) {
