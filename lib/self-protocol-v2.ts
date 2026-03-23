@@ -13,7 +13,7 @@
  * No API keys needed. No registration. Just scope + endpoint.
  */
 
-import { SelfBackendVerifier } from "@selfxyz/core";
+import { SelfBackendVerifier, AllIds, DefaultConfigStore } from "@selfxyz/core";
 
 export interface SelfVerificationConfig {
   appId: string;
@@ -110,9 +110,14 @@ export async function verifyProof(
       SELF_SCOPE,
       callbackEndpoint,
       false, // mockPassport: false = mainnet verification
+      AllIds, // Allow all attestation types (passport, ID card, etc.)
+      new DefaultConfigStore({ minimumAge: 18, ofac: true }),
+      "hex", // User identifier type (wallet addresses)
     );
 
-    const result = await verifier.verify(proof, publicSignals) as Record<string, unknown>;
+    // verify(attestationId, proof, pubSignals, userContextData)
+    // attestationId 1 = passport, proof is the ZK proof object
+    const result = await verifier.verify(1 as never, proof as never, publicSignals as never, "" as never) as Record<string, unknown>;
 
     return {
       isVerified: result.isVerified as boolean,
