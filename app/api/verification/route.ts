@@ -27,7 +27,7 @@ import {
 } from "@/lib/providers";
 import type { Address } from "viem";
 import { enrichWithENS, isENSName, resolveToAddress } from "@/lib/ens";
-import { analyzeVerificationPrivately, getPrivacyAttestation } from "@/lib/venice";
+import { getPrivacyAttestation } from "@/lib/venice";
 
 // In-memory store for verification requests (use Redis in production)
 export const verificationRequests = new Map<
@@ -284,11 +284,6 @@ export async function POST(request: NextRequest) {
 
     const verificationPlan = getVerificationPlan(level as TierLevel);
 
-    // Venice private risk analysis (for biometric and fullkyc tiers)
-    const veniceAnalysis = (level === "biometric" || level === "fullkyc")
-      ? await analyzeVerificationPrivately({ tier: level })
-      : null;
-
     // Enrich with ENS names for the response
     const [agentENSData, userENSData] = await Promise.all([
       enrichWithENS(resolvedAgent.toLowerCase()),
@@ -355,15 +350,17 @@ export async function POST(request: NextRequest) {
         discountApplied,
         discountPercent: discountApplied ? 20 : 0,
       },
-      ...(veniceAnalysis ? {
-        privacyAnalysis: {
-          riskScore: veniceAnalysis.riskScore,
-          flags: veniceAnalysis.flags,
-          confidence: veniceAnalysis.confidence,
-          dataRetention: "none",
-          provider: "Venice AI",
-        },
-      } : {}),
+      veniceVerdict: multiProviderResult.veniceVerdict ? {
+        approve: multiProviderResult.veniceVerdict.approve,
+        confidence: multiProviderResult.veniceVerdict.confidence,
+        assuranceLevel: multiProviderResult.veniceVerdict.assuranceLevel,
+        reasoning: multiProviderResult.veniceVerdict.reasoning,
+        flags: multiProviderResult.veniceVerdict.flags,
+        insights: multiProviderResult.veniceVerdict.insights,
+        engine: multiProviderResult.veniceVerdict.engine,
+        durationMs: multiProviderResult.veniceVerdict.durationMs,
+        dataRetention: "none",
+      } : undefined,
       privacy: getPrivacyAttestation(),
       message: demoMode
         ? "Demo mode: multi-provider verification simulated"
