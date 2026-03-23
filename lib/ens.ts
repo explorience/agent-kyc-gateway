@@ -13,7 +13,7 @@ import { normalize } from "viem/ens";
 // Use public Ethereum RPC for ENS lookups
 const ensClient = createPublicClient({
   chain: mainnet,
-  transport: http("https://eth.llamarpc.com"),
+  transport: http(process.env.ENS_RPC_URL || "https://ethereum-rpc.publicnode.com"),
 });
 
 // Simple in-memory cache (address → name, name → address)
