@@ -38,12 +38,16 @@ const howItWorks = [
 ];
 
 const techLogos = [
-  { label: "Celo", logo: "/logos/celo.svg", url: "https://celo.org" },
-  { label: "Venice AI", logo: "/logos/venice.svg", url: "https://venice.ai" },
-  { label: "Self Protocol", logo: "/logos/self.svg", url: "https://self.xyz" },
-  { label: "Didit", logo: "/logos/didit.svg", url: "https://didit.me" },
-  { label: "ENS", logo: "/logos/ens.svg", url: "https://ens.domains" },
-  { label: "EAS", logo: "/logos/eas.svg", url: "https://attest.org" },
+  { label: "Celo", logo: "/logos/celo.png", url: "https://celo.org" },
+  { label: "Venice AI", logo: "/logos/venice.png", url: "https://venice.ai" },
+  { label: "Self Protocol", logo: "/logos/self.png", url: "https://self.xyz" },
+  { label: "Didit", logo: "/logos/didit.png", url: "https://didit.me" },
+  { label: "ENS", logo: "/logos/ens.png", url: "https://ens.domains" },
+  { label: "EAS", logo: "/logos/eas.png", url: "https://attest.org" },
+  { label: "x402", logo: null, url: "https://www.x402.org" },
+  { label: "ERC-8004", logo: null, url: "https://eips.ethereum.org/EIPS/eip-8004" },
+  { label: "ZK-SNARKs", logo: null, url: null },
+  { label: "Human Passport", logo: null, url: "https://humanpassport.io" },
 ];
 
 const useCases = [
@@ -101,7 +105,7 @@ export default function LandingPage() {
 
           {/* Logo */}
           <div className="flex justify-center mb-8">
-            <img src="/logo.svg" alt="Know Your Human" className="w-20 h-20 sm:w-24 sm:h-24" />
+            <img src="/logos/kyh.png" alt="Know Your Human" className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl" />
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight tracking-tight">
@@ -413,25 +417,36 @@ export default function LandingPage() {
           <p className="text-xs text-gray-600 uppercase tracking-widest mb-8 font-semibold">
             Built With
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-            {techLogos.map((tech) => (
-              <a
-                key={tech.label}
-                href={tech.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-all duration-200 group"
-              >
-                <img
-                  src={tech.logo}
-                  alt={tech.label}
-                  className="w-10 h-10 sm:w-12 sm:h-12 group-hover:scale-110 transition-all duration-200"
-                />
-                <span className="text-xs text-gray-500 group-hover:text-gray-300 font-medium">
-                  {tech.label}
-                </span>
-              </a>
-            ))}
+          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-10">
+            {techLogos.map((tech) => {
+              const inner = (
+                <div className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-all duration-200 group">
+                  {tech.logo ? (
+                    <img
+                      src={tech.logo}
+                      alt={tech.label}
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg group-hover:scale-110 transition-all duration-200 object-contain"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border border-gray-700 bg-gray-800/50 flex items-center justify-center group-hover:scale-110 transition-all duration-200">
+                      <span className="text-[10px] font-bold text-gray-400 text-center leading-tight">
+                        {tech.label === "ZK-SNARKs" ? "ZK" : tech.label === "Human Passport" ? "HP" : tech.label === "ERC-8004" ? "8004" : tech.label}
+                      </span>
+                    </div>
+                  )}
+                  <span className="text-xs text-gray-500 group-hover:text-gray-300 font-medium">
+                    {tech.label}
+                  </span>
+                </div>
+              );
+              return tech.url ? (
+                <a key={tech.label} href={tech.url} target="_blank" rel="noopener noreferrer">
+                  {inner}
+                </a>
+              ) : (
+                <div key={tech.label}>{inner}</div>
+              );
+            })}
           </div>
         </div>
       </section>
