@@ -73,12 +73,25 @@ export async function getPassportScore(
   }
 
   // Production: query HP API
+  const scorerId = process.env.HP_SCORER_ID || "11976";
   try {
+    // First submit for scoring (triggers recalculation if needed)
+    await fetch(`https://api.scorer.gitcoin.co/registry/submit-passport`, {
+      method: "POST",
+      headers: {
+        "X-API-Key": process.env.HP_API_KEY || "",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ address, scorer_id: scorerId }),
+      signal: AbortSignal.timeout(5000),
+    }).catch(() => {}); // Best effort
+
+    // Then fetch the score
     const res = await fetch(
-      `${HP_API_BASE}/score/1/${address}`,
+      `https://api.scorer.gitcoin.co/registry/score/${scorerId}/${address}`,
       {
         headers: {
-          "X-API-KEY": process.env.HP_API_KEY || "",
+          "X-API-Key": process.env.HP_API_KEY || "",
         },
         signal: AbortSignal.timeout(5000),
       }
@@ -94,13 +107,18 @@ export async function getPassportScore(
     }
 
     const data = await res.json();
+    // rawScore is the actual humanity score (0-100), score field is binary pass/fail
+    const rawScore = Math.round(data.evidence?.rawScore || Number(data.score) || 0);
+    const stampNames = data.stamp_scores ? Object.keys(data.stamp_scores) : [];
+    const classification =
+      rawScore > 70 ? "human" :
+      rawScore > 50 ? "likely_human" :
+      rawScore > 30 ? "suspicious" : "sybil";
+
     return {
-      score: Number(data.score) || 0,
-      classification:
-        Number(data.score) > 20 ? "likely_human" : "suspicious",
-      stamps: (data.stamps || []).map(
-        (s: { provider: string }) => s.provider
-      ),
+      score: rawScore,
+      classification: classification as PassportScore["classification"],
+      stamps: stampNames,
       lastUpdated: data.last_score_timestamp || new Date().toISOString(),
     };
   } catch {
