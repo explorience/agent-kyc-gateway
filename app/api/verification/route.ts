@@ -268,11 +268,14 @@ export async function POST(request: NextRequest) {
       .map((r) => r.provider)
       .join("+");
 
+    // Only skip on-chain attestation if providers are in demo mode
+    // Failed verification still gets a real (failed) attestation if we're not in demo
+    const skipOnChain = multiProviderResult.demoMode || !multiProviderResult.overallSuccess;
     const easAttestation = await issueKYHCredential(
       resolvedUser,
       level as TierLevel,
       providerNames,
-      !multiProviderResult.overallSuccess || multiProviderResult.demoMode
+      skipOnChain
     );
 
     storedRequest.attestationHash = easAttestation.uid;
@@ -289,7 +292,8 @@ export async function POST(request: NextRequest) {
       `Verification ${storedRequest.status} for ${userAddress}: ${easAttestation.uid} (demo: ${easAttestation.demoMode}, evidence: ${evidenceHash})`
     );
 
-    const demoMode = easAttestation.demoMode;
+    // demoMode reflects whether providers used real APIs, NOT whether the user passed
+    const demoMode = multiProviderResult.demoMode;
 
     const verificationPlan = getVerificationPlan(level as TierLevel);
 
