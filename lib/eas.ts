@@ -248,8 +248,10 @@ export function formatAttestationResponse(att: KYHAttestation) {
     validityDays: Math.round(VALIDITY_WINDOWS[att.level] / 86400),
     network: att.network,
     demoMode: att.demoMode,
+    transactionHash: att.transactionHash || null,
     easScanUrl: att.demoMode
       ? null
       : `https://celo.easscan.org/attestation/view/${att.uid}`,
+    ...(att.easError ? { easError: att.easError } : {}),
   };
 }
