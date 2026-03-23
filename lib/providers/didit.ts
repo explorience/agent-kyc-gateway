@@ -142,7 +142,7 @@ export async function screenAML(): Promise<DiditAMLResult> {
  * Run Didit verification suite based on tier level.
  */
 export async function verifyWithDidit(
-  level: "basic" | "standard" | "enhanced",
+  level: string,
   _userAddress: string
 ): Promise<ProviderResult> {
   const start = Date.now();

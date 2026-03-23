@@ -75,7 +75,7 @@ async function checkSocialStamps(address: string): Promise<SocialStampsResult> {
  * No passport, no document upload, no liveness check required.
  */
 export async function verifyWithStarter(
-  _level: "starter",
+  _level: string,
   userAddress: string
 ): Promise<ProviderResult> {
   const start = Date.now();

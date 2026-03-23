@@ -40,7 +40,7 @@ export interface ProviderResult {
 }
 
 export interface VerificationPlan {
-  level: "starter" | "basic" | "standard" | "enhanced";
+  level: string;
   providers: Array<"self" | "didit" | "human-passport" | "starter">;
   checks: string[];
   estimatedCostUSD: string;
@@ -61,50 +61,61 @@ export interface MultiProviderResult {
  * Get the verification plan for a given tier.
  */
 export function getVerificationPlan(
-  level: "starter" | "basic" | "standard" | "enhanced"
+  level: string
 ): VerificationPlan {
   switch (level) {
-    case "starter":
-      return {
-        level,
-        providers: ["starter"],
-        checks: ["phone", "sybil-score"],
-        estimatedCostUSD: "0.001",
-        estimatedTimeSeconds: 2,
-      };
-    case "basic":
-      return {
-        level,
-        providers: ["self"],
-        checks: ["humanity", "age"],
-        estimatedCostUSD: "0.01",
-        estimatedTimeSeconds: 3,
-      };
-    case "standard":
+    case "reputation":
+    case "starter": // legacy alias
       return {
         level,
         providers: ["human-passport"],
-        checks: ["document", "liveness", "face-match", "humanity"],
+        checks: ["onchain-activity", "sybil-score"],
+        estimatedCostUSD: "0",
+        estimatedTimeSeconds: 2,
+      };
+    case "document":
+    case "basic": // legacy alias
+      return {
+        level,
+        providers: ["self"],
+        checks: ["passport-nfc", "zk-proof", "age", "nationality"],
+        estimatedCostUSD: "0.01",
+        estimatedTimeSeconds: 3,
+      };
+    case "biometric":
+    case "standard": // legacy alias
+      return {
+        level,
+        providers: ["didit"],
+        checks: ["document-scan", "liveness", "face-match", "ip-analysis"],
         estimatedCostUSD: "0.25",
         estimatedTimeSeconds: 8,
       };
-    case "enhanced":
+    case "fullkyc":
+    case "enhanced": // legacy alias
       return {
         level,
-        providers: ["self", "didit", "human-passport"],
+        providers: ["self", "didit"],
         checks: [
-          "humanity",
-          "age",
-          "nationality",
-          "document",
+          "passport-nfc",
+          "zk-proof",
+          "document-scan",
           "liveness",
           "face-match",
-          "aml",
-          "sanctions",
-          "sybil-score",
+          "aml-screening",
+          "sanctions-check",
+          "ip-analysis",
         ],
         estimatedCostUSD: "0.75",
         estimatedTimeSeconds: 12,
+      };
+    default:
+      return {
+        level,
+        providers: [],
+        checks: [],
+        estimatedCostUSD: "0",
+        estimatedTimeSeconds: 0,
       };
   }
 }
@@ -113,7 +124,7 @@ export function getVerificationPlan(
  * Execute multi-provider verification for a given tier.
  */
 export async function executeVerification(
-  level: "starter" | "basic" | "standard" | "enhanced",
+  level: string,
   userData: {
     userAddress: string;
     agentAddress: string;
@@ -124,26 +135,25 @@ export async function executeVerification(
   const plan = getVerificationPlan(level);
   const results: ProviderResult[] = [];
 
-  if (level === "starter") {
-    // Starter: phone + social stamps only, no document required
-    const starterResult = await verifyWithStarter("starter", userData.userAddress);
-    results.push(starterResult);
-  } else if (level === "basic") {
-    // Basic: Self Protocol ZK passport only
-    const selfResult = await verifySelf(level, userData.userAddress);
-    results.push(selfResult);
-  } else if (level === "standard") {
-    // Standard: Human Passport Individual Verifications (Gov ID + liveness + face match)
+  if (level === "reputation" || level === "starter") {
+    // Reputation: onchain activity scoring via Human Passport
     const hpResult = await verifyWithHumanPassport(level, userData.userAddress);
     results.push(hpResult);
-  } else if (level === "enhanced") {
-    // Enhanced: Self + Didit full KYC + HP Clean Hands
-    const [selfResult, diditResult, hpResult] = await Promise.all([
+  } else if (level === "document" || level === "basic") {
+    // Document: Self Protocol ZK passport proof
+    const selfResult = await verifySelf(level, userData.userAddress);
+    results.push(selfResult);
+  } else if (level === "biometric" || level === "standard") {
+    // Biometric: Didit liveness + face match + ID + IP analysis
+    const diditResult = await verifyWithDidit(level, userData.userAddress);
+    results.push(diditResult);
+  } else if (level === "fullkyc" || level === "enhanced") {
+    // Full KYC: Self + Didit + AML
+    const [selfResult, diditResult] = await Promise.all([
       verifySelf(level, userData.userAddress),
       verifyWithDidit(level, userData.userAddress),
-      verifyWithHumanPassport(level, userData.userAddress),
     ]);
-    results.push(selfResult, diditResult, hpResult);
+    results.push(selfResult, diditResult);
   }
 
   // suppress unused warning

@@ -10,8 +10,10 @@
 
 import type { Address } from "viem";
 
+export type TierLevel = "reputation" | "document" | "biometric" | "fullkyc";
+
 export interface PaymentTier {
-  level: "starter" | "basic" | "standard" | "enhanced";
+  level: TierLevel;
   priceUSD: string;
   priceCUSD: string;
   description: string;
@@ -50,31 +52,61 @@ export interface x402PaymentResult {
 
 // Payment tiers
 export const PAYMENT_TIERS: Record<string, PaymentTier> = {
-  starter: {
-    level: "starter",
-    priceUSD: "$0.001",
-    priceCUSD: "0.001",
-    description: "Starter — phone + social proof (no documents required)",
+  reputation: {
+    level: "reputation",
+    priceUSD: "Free",
+    priceCUSD: "0",
+    description: "Reputation — onchain activity scoring, basic sybil resistance",
   },
-  basic: {
-    level: "basic",
+  document: {
+    level: "document",
     priceUSD: "$0.01",
     priceCUSD: "0.01",
-    description: "Basic — ZK passport proof via Self Protocol",
+    description: "Document — ZK passport proof via Self Protocol",
   },
-  standard: {
-    level: "standard",
+  biometric: {
+    level: "biometric",
     priceUSD: "$0.25",
     priceCUSD: "0.25",
-    description: "Standard — Gov ID + liveness via Human Passport",
+    description: "Biometric — liveness + face match + gov ID via Didit",
   },
-  enhanced: {
-    level: "enhanced",
+  fullkyc: {
+    level: "fullkyc",
     priceUSD: "$0.75",
     priceCUSD: "0.75",
-    description: "Enhanced — ZK passport + biometric KYC + AML screening",
+    description: "Full KYC — ZK passport + biometric + AML screening",
   },
 };
+
+// Legacy tier name mapping (old → new)
+export const TIER_ALIASES: Record<string, TierLevel> = {
+  starter: "reputation",
+  basic: "document",
+  standard: "biometric",
+  enhanced: "fullkyc",
+};
+
+/** Resolve a tier name (supports both old and new names) */
+export function resolveTier(level: string): TierLevel | null {
+  if (level in PAYMENT_TIERS) return level as TierLevel;
+  if (level in TIER_ALIASES) return TIER_ALIASES[level];
+  return null;
+}
+
+/**
+ * Apply Self Agent ID discount to a tier price
+ */
+export function applyAgentIdDiscount(
+  priceCUSD: string,
+  hasAgentId: boolean
+): { price: string; discountApplied: boolean } {
+  const price = parseFloat(priceCUSD);
+  if (price === 0 || !hasAgentId) {
+    return { price: priceCUSD, discountApplied: false };
+  }
+  const discounted = (price * 0.8).toFixed(price >= 0.1 ? 2 : 3);
+  return { price: discounted, discountApplied: true };
+}
 
 // cUSD contract on Alfajores testnet
 const CUSD_ADDRESS_ALFAJORES = "0xEF4d55D6dE8e8d73232827Cd1e9b2F2dBb45bC80";
@@ -84,16 +116,18 @@ const CUSD_ADDRESS_ALFAJORES = "0xEF4d55D6dE8e8d73232827Cd1e9b2F2dBb45bC80";
  * This is what the server sends back when payment is needed.
  */
 export function generate402Header(
-  level: "starter" | "basic" | "standard" | "enhanced",
-  resource: string
+  level: TierLevel,
+  resource: string,
+  hasAgentId: boolean = false
 ): string {
   const tier = PAYMENT_TIERS[level];
+  const { price } = applyAgentIdDiscount(tier.priceCUSD, hasAgentId);
   const issuerAddress = process.env.ISSUER_ADDRESS || "0x7f812f3a8695400e3075DAC2d5008CB068D162e7";
 
   const paymentRequest: PaymentRequest = {
     scheme: "exact",
     network: "celo-sepolia",
-    maxAmountRequired: tier.priceCUSD,
+    maxAmountRequired: price,
     resource,
     description: tier.description,
     mimeType: "application/json",
@@ -117,7 +151,7 @@ export function generate402Header(
 export async function verifyPayment(
   paymentHeader: string,
   requiredAmount: string,
-  level: "starter" | "basic" | "standard" | "enhanced"
+  level: TierLevel
 ): Promise<x402PaymentResult> {
   const isDemoMode = !process.env.ISSUER_PRIVATE_KEY || paymentHeader.startsWith("demo:");
 
@@ -171,7 +205,7 @@ export async function verifyPayment(
  * Simulates the full x402 flow without real transactions.
  */
 export async function createDemoPayment(
-  level: "starter" | "basic" | "standard" | "enhanced",
+  level: TierLevel,
   payerAddress: string
 ): Promise<x402PaymentResult> {
   const tier = PAYMENT_TIERS[level];

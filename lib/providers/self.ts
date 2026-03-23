@@ -17,7 +17,7 @@ function sleep(ms: number): Promise<void> {
  * Demo mode activates when SELF_APP_ID is not configured.
  */
 export async function verifySelf(
-  level: "basic" | "standard" | "enhanced",
+  level: string,
   userAddress: string
 ): Promise<ProviderResult> {
   const start = Date.now();

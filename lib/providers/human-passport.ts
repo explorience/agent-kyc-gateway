@@ -152,7 +152,7 @@ export async function checkCleanHands(
  * Run Human Passport verification based on tier.
  */
 export async function verifyWithHumanPassport(
-  level: "basic" | "standard" | "enhanced",
+  level: string,
   userAddress: string
 ): Promise<ProviderResult> {
   const start = Date.now();

@@ -21,13 +21,24 @@ export const CUSD_CELO = "0x765DE816845861e75A25fCA122bb6898B8B1282a";
 export const CELO_RPC = "https://forno.celo.org";
 
 export const VALIDITY_WINDOWS: Record<string, number> = {
-  starter: 7 * 24 * 60 * 60,
-  basic: 30 * 24 * 60 * 60,
-  standard: 60 * 24 * 60 * 60,
+  // All tiers: 90-day validity
+  reputation: 90 * 24 * 60 * 60,
+  document: 90 * 24 * 60 * 60,
+  biometric: 90 * 24 * 60 * 60,
+  fullkyc: 90 * 24 * 60 * 60,
+  // Legacy aliases
+  starter: 90 * 24 * 60 * 60,
+  basic: 90 * 24 * 60 * 60,
+  standard: 90 * 24 * 60 * 60,
   enhanced: 90 * 24 * 60 * 60,
 };
 
 export const LEVEL_NUMBERS: Record<string, number> = {
+  reputation: 1,
+  document: 2,
+  biometric: 3,
+  fullkyc: 4,
+  // Legacy aliases
   starter: 1,
   basic: 2,
   standard: 3,
@@ -35,10 +46,10 @@ export const LEVEL_NUMBERS: Record<string, number> = {
 };
 
 export const LEVEL_NAMES: Record<number, string> = {
-  1: "starter",
-  2: "basic",
-  3: "standard",
-  4: "enhanced",
+  1: "reputation",
+  2: "document",
+  3: "biometric",
+  4: "fullkyc",
 };
 
 export interface KYHAttestation {
@@ -70,7 +81,7 @@ function generateDemoUID(): string {
  */
 export async function issueKYHCredential(
   recipientAddress: string,
-  level: "starter" | "basic" | "standard" | "enhanced",
+  level: string,
   provider: string,
   demoMode: boolean = false
 ): Promise<KYHAttestation> {

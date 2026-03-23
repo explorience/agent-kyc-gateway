@@ -49,7 +49,7 @@ export function isSelfConfigured(): boolean {
  */
 export async function createVerificationSession(
   userId: string,
-  level: "starter" | "basic" | "standard" | "enhanced"
+  level: string
 ): Promise<VerificationSession> {
   const sessionId = generateSessionId();
   const isDemoMode = !isSelfConfigured();
@@ -186,7 +186,7 @@ export async function simulateDemoVerification(
 
 // Helper functions
 
-function getScopesForLevel(level: "starter" | "basic" | "standard" | "enhanced"): string[] {
+function getScopesForLevel(level: string): string[] {
   switch (level) {
     case "basic":
       return ["humanity_proof"];

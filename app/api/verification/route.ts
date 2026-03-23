@@ -9,9 +9,17 @@ import {
   isEASConfigured,
   formatAttestationResponse,
 } from "@/lib/eas";
-import { generate402Header, verifyPayment, PAYMENT_TIERS } from "@/lib/x402";
+import {
+  generate402Header,
+  verifyPayment,
+  PAYMENT_TIERS,
+  resolveTier,
+  applyAgentIdDiscount,
+  type TierLevel,
+} from "@/lib/x402";
 import { isRegisteredAgent } from "@/lib/erc8004";
 import { checkRateLimit, getRetryAfter } from "@/lib/rate-limiter";
+import { checkAgentId } from "@/lib/selfAgentId";
 import {
   executeVerification,
   getVerificationPlan,
@@ -46,7 +54,8 @@ export async function POST(request: NextRequest) {
       agentAddress,
       agentId,
       userAddress,
-      level = "basic",
+      level: rawLevel = "document",
+      tier: rawTier,
       paymentHeader,
       skipPayment,
     } = body;
@@ -59,16 +68,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validLevels = ["starter", "basic", "standard", "enhanced"];
-    if (!validLevels.includes(level)) {
+    // Resolve tier name (supports both old and new names)
+    const level = resolveTier(rawTier || rawLevel);
+    if (!level) {
       return NextResponse.json(
         {
           error:
-            "Invalid verification level. Use: starter, basic, standard, or enhanced",
+            "Invalid verification tier. Use: reputation, document, biometric, or fullkyc",
         },
         { status: 400 }
       );
     }
+
+    // Check Self Agent ID for discount
+    const agentIdStatus = await checkAgentId(request as unknown as Request);
+    const hasAgentId = agentIdStatus.verified;
 
     // ERC-8004 agent identity verification (optional but recommended)
     if (agentId !== undefined) {
@@ -111,27 +125,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const tier = PAYMENT_TIERS[level];
+    const tierConfig = PAYMENT_TIERS[level];
+    const { price: adjustedPrice, discountApplied } = applyAgentIdDiscount(
+      tierConfig.priceCUSD,
+      hasAgentId
+    );
 
     // x402 Payment gate
+    // Reputation tier is free — skip payment
     // If no payment header and not skipping payment, return 402
-    if (!paymentHeader && !skipPayment) {
+    const isFree = parseFloat(adjustedPrice) === 0;
+    if (!paymentHeader && !skipPayment && !isFree) {
       const resource = `${process.env.NEXT_PUBLIC_GATEWAY_URL || "http://localhost:3000"}/api/verification`;
-      const paymentRequirements = generate402Header(
-        level as "starter" | "basic" | "standard" | "enhanced",
-        resource
-      );
+      const paymentRequirements = generate402Header(level, resource, hasAgentId);
 
       return NextResponse.json(
         {
           error: "Payment Required",
           paymentRequired: {
-            amount: tier.priceCUSD,
+            amount: adjustedPrice,
             currency: "cUSD",
-            network: "celo-sepolia",
+            network: "celo",
             paymentRequirements,
-            tier: tier.level,
-            description: tier.description,
+            tier: tierConfig.level,
+            description: tierConfig.description,
+            selfAgentId: hasAgentId
+              ? {
+                  verified: true,
+                  agentAddress: agentIdStatus.agentAddress,
+                  discountApplied: true,
+                  discountPercent: 20,
+                  originalAmount: tierConfig.priceCUSD,
+                }
+              : {
+                  verified: false,
+                  message:
+                    "Get 20% off with Self Agent ID. Register at https://app.ai.self.xyz/",
+                },
           },
         },
         {
@@ -143,13 +173,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify payment if provided
+    // Verify payment if provided (skip for free tiers)
     let paymentReceipt = null;
-    if (paymentHeader) {
+    if (paymentHeader && !isFree) {
       const paymentResult = await verifyPayment(
         paymentHeader,
-        tier.priceCUSD,
-        level as "starter" | "basic" | "standard" | "enhanced"
+        adjustedPrice,
+        level,
       );
       if (!paymentResult.success) {
         return NextResponse.json(
@@ -185,7 +215,7 @@ export async function POST(request: NextRequest) {
     // Create Self Protocol verification session
     const selfSession = await createVerificationSession(
       userAddress,
-      level as "starter" | "basic" | "standard" | "enhanced"
+      level as TierLevel
     );
 
     // Store the Self session ID for webhook callbacks
@@ -194,7 +224,7 @@ export async function POST(request: NextRequest) {
 
     // Multi-provider verification
     const multiProviderResult = await executeVerification(
-      level as "starter" | "basic" | "standard" | "enhanced",
+      level as TierLevel,
       { userAddress, agentAddress, agentId: requestData.agentId }
     );
     storedRequest.providerResults = multiProviderResult;
@@ -206,7 +236,7 @@ export async function POST(request: NextRequest) {
 
     const easAttestation = await issueKYHCredential(
       userAddress,
-      level as "starter" | "basic" | "standard" | "enhanced",
+      level as TierLevel,
       providerNames,
       !multiProviderResult.overallSuccess || multiProviderResult.demoMode
     );
@@ -220,7 +250,7 @@ export async function POST(request: NextRequest) {
 
     const demoMode = easAttestation.demoMode;
 
-    const verificationPlan = getVerificationPlan(level as "starter" | "basic" | "standard" | "enhanced");
+    const verificationPlan = getVerificationPlan(level as TierLevel);
 
     const response = NextResponse.json({
       verificationId,
@@ -253,6 +283,21 @@ export async function POST(request: NextRequest) {
         })),
       },
       demoMode,
+      selfAgentId: hasAgentId
+        ? {
+            verified: true,
+            agentAddress: agentIdStatus.agentAddress,
+            agentId: agentIdStatus.agentId,
+            discountApplied: discountApplied,
+          }
+        : { verified: false },
+      pricing: {
+        tier: level,
+        originalPrice: tierConfig.priceCUSD,
+        finalPrice: adjustedPrice,
+        discountApplied,
+        discountPercent: discountApplied ? 20 : 0,
+      },
       message: demoMode
         ? "Demo mode: multi-provider verification simulated"
         : "Verification complete via Self Protocol + Didit + Human Passport.",
