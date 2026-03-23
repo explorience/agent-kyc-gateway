@@ -1,16 +1,29 @@
 /**
- * Multi-Provider Verification Abstraction
+ * Multi-Provider Verification with Venice Reasoning Engine
  *
- * Routes verification requests to the appropriate providers based on tier:
- * - Basic: Self Protocol (ZK humanity) + Human Passport (sybil score)
- * - Standard: Self + Didit (ID + face match) + HP score
- * - Enhanced: Self + Didit (full KYC + AML) + HP (sanctions)
+ * Architecture:
+ * 1. Providers (Self, Didit, Human Passport) gather raw verification signals
+ * 2. Venice AI processes ALL signals holistically and makes the trust decision
+ * 3. Venice's verdict determines whether the credential is issued
+ *
+ * Venice replaces hard-coded if/else scoring with contextual reasoning.
+ * It catches cross-provider patterns that threshold logic cannot:
+ * - High reputation but failed document → possible identity borrowing
+ * - Fast response times across all providers → possible replay attack
+ * - Liveness pass but zero on-chain history → real but new user (flag, don't deny)
+ *
+ * If Venice is unavailable, deterministic fallback logic kicks in.
  */
 
 import { verifySelf } from "./self";
 import { verifyWithDidit } from "./didit";
 import { verifyWithHumanPassport } from "./human-passport";
 import { verifyWithStarter } from "./starter";
+import {
+  reasonOverVerification,
+  type ProviderSignal,
+  type VeniceVerdict,
+} from "../venice";
 
 export interface ProviderCheck {
   type:
@@ -55,17 +68,17 @@ export interface MultiProviderResult {
   passedChecks: number;
   demoMode: boolean;
   durationMs: number;
+  /** Venice reasoning verdict — the core decision engine */
+  veniceVerdict?: VeniceVerdict;
 }
 
 /**
  * Get the verification plan for a given tier.
  */
-export function getVerificationPlan(
-  level: string
-): VerificationPlan {
+export function getVerificationPlan(level: string): VerificationPlan {
   switch (level) {
     case "reputation":
-    case "starter": // legacy alias
+    case "starter":
       return {
         level,
         providers: ["human-passport"],
@@ -74,7 +87,7 @@ export function getVerificationPlan(
         estimatedTimeSeconds: 2,
       };
     case "document":
-    case "basic": // legacy alias
+    case "basic":
       return {
         level,
         providers: ["self"],
@@ -83,7 +96,7 @@ export function getVerificationPlan(
         estimatedTimeSeconds: 3,
       };
     case "biometric":
-    case "standard": // legacy alias
+    case "standard":
       return {
         level,
         providers: ["didit"],
@@ -92,7 +105,7 @@ export function getVerificationPlan(
         estimatedTimeSeconds: 8,
       };
     case "fullkyc":
-    case "enhanced": // legacy alias
+    case "enhanced":
       return {
         level,
         providers: ["self", "didit"],
@@ -122,6 +135,10 @@ export function getVerificationPlan(
 
 /**
  * Execute multi-provider verification for a given tier.
+ *
+ * Step 1: Gather raw signals from providers
+ * Step 2: Send ALL signals to Venice for holistic reasoning
+ * Step 3: Venice's verdict determines overallSuccess
  */
 export async function executeVerification(
   level: string,
@@ -132,23 +149,20 @@ export async function executeVerification(
   }
 ): Promise<MultiProviderResult> {
   const start = Date.now();
-  const plan = getVerificationPlan(level);
   const results: ProviderResult[] = [];
 
+  // ── Step 1: Gather raw signals from providers ──────────────────────────
+
   if (level === "reputation" || level === "starter") {
-    // Reputation: onchain activity scoring via Human Passport
     const hpResult = await verifyWithHumanPassport(level, userData.userAddress);
     results.push(hpResult);
   } else if (level === "document" || level === "basic") {
-    // Document: Self Protocol ZK passport proof
     const selfResult = await verifySelf(level, userData.userAddress);
     results.push(selfResult);
   } else if (level === "biometric" || level === "standard") {
-    // Biometric: Didit liveness + face match + ID + IP analysis
     const diditResult = await verifyWithDidit(level, userData.userAddress);
     results.push(diditResult);
   } else if (level === "fullkyc" || level === "enhanced") {
-    // Full KYC: Self + Didit + AML
     const [selfResult, diditResult] = await Promise.all([
       verifySelf(level, userData.userAddress),
       verifyWithDidit(level, userData.userAddress),
@@ -156,14 +170,38 @@ export async function executeVerification(
     results.push(selfResult, diditResult);
   }
 
-  // suppress unused warning
-  void plan;
+  // ── Step 2: Convert to Venice signal format ────────────────────────────
 
-  // Aggregate results
+  const providerSignals: ProviderSignal[] = results.map((r) => ({
+    provider: r.provider,
+    success: r.success,
+    score: r.score,
+    checks: r.checks.map((c) => `${c.type}:${c.passed ? "pass" : "fail"}`),
+    flags: r.checks.filter((c) => !c.passed).map((c) => `${c.type}_failed`),
+    durationMs: r.durationMs,
+    demoMode: r.demoMode,
+  }));
+
+  // ── Step 3: Venice makes the decision ──────────────────────────────────
+
+  const veniceVerdict = await reasonOverVerification({
+    tier: level,
+    walletAddress: userData.userAddress,
+    agentAddress: userData.agentAddress,
+    providerSignals,
+    metadata: {
+      requestTimestamp: new Date().toISOString(),
+    },
+  });
+
+  // ── Step 4: Aggregate ──────────────────────────────────────────────────
+
   const allChecks = results.flatMap((r) => r.checks);
   const passedChecks = allChecks.filter((c) => c.passed).length;
-  const overallSuccess = results.every((r) => r.success);
   const demoMode = results.some((r) => r.demoMode);
+
+  // Venice's verdict is the source of truth for overallSuccess
+  const overallSuccess = veniceVerdict.approve;
 
   return {
     level,
@@ -173,5 +211,6 @@ export async function executeVerification(
     passedChecks,
     demoMode,
     durationMs: Date.now() - start,
+    veniceVerdict,
   };
 }
